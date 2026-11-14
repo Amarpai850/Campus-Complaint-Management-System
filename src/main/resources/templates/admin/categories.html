@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a href="/admin/dashboard" class="brand">🏫 Campus CMS (Admin)</a>
+        <div class="nav-links">
+            <a th:href="@{/admin/dashboard}">Complaints</a>
+            <a th:href="@{/admin/users}">Users</a>
+            <a th:href="@{/admin/categories}">Categories</a>
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-content">
+    <div class="page-header">
+        <h1>🏷️ Complaint Categories</h1>
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+        <div class="card">
+            <div class="card-header">Existing Categories</div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cat : ${categories}">
+                            <td th:text="${cat.id}"></td>
+                            <td><strong th:text="${cat.name}"></strong></td>
+                            <td th:text="${cat.description}"></td>
+                            <td>
+                                <span class="badge" th:classappend="${cat.active ? 'badge-resolved' : 'badge-closed'}"
+                                      th:text="${cat.active ? 'Active' : 'Inactive'}"></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">➕ Add New Category</div>
+            <form th:action="@{/admin/categories/new}" method="post">
+                <div class="form-group">
+                    <label for="name">Category Name *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Laboratory Equipment" required>
+                </div>
+                <div class="form-group">
+                    <label for="desc">Description</label>
+                    <textarea id="desc" name="description" class="form-control" placeholder="Brief details about this category" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Category</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 Campus Complaint Management System - Admin Portal</p>
+</footer>
+</body>
+</html>

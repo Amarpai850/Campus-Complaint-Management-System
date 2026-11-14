@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Details - Campus CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a href="/student/dashboard" class="brand">🏫 Campus CMS</a>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">Dashboard</a>
+            <a th:href="@{/student/complaints/new}">New Complaint</a>
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-content">
+    <div class="page-header">
+        <h1>🔍 Complaint Details</h1>
+        <a th:href="@{/student/dashboard}" class="btn btn-secondary">← Back</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header" th:text="'#' + ${complaint.id} + ' - ' + ${complaint.title}"></div>
+
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">Status</div>
+                <div class="value">
+                    <span class="badge"
+                          th:classappend="${complaint.status.name() == 'PENDING' ? 'badge-pending' :
+                                           complaint.status.name() == 'ASSIGNED' ? 'badge-assigned' :
+                                           complaint.status.name() == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                           complaint.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'}"
+                          th:text="${complaint.status}"></span>
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Category</div>
+                <div class="value" th:text="${complaint.categoryName}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Location</div>
+                <div class="value" th:text="${complaint.location}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Priority</div>
+                <div class="value" th:text="${complaint.priority}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Submitted On</div>
+                <div class="value" th:text="${#temporals.format(complaint.createdAt, 'dd-MM-yyyy HH:mm')}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Assigned To</div>
+                <div class="value" th:text="${complaint.assignedStaffName != null ? complaint.assignedStaffName : 'Not yet assigned'}"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="label">Description</div>
+            <p th:text="${complaint.description}" style="margin-top:6px;"></p>
+        </div>
+    </div>
+
+    <!-- Complaint History / Timeline -->
+    <div class="card">
+        <div class="card-header">📜 Complaint History</div>
+        <div th:if="${#lists.isEmpty(history)}" class="text-muted">No history available.</div>
+
+        <div class="timeline" th:unless="${#lists.isEmpty(history)}">
+            <div class="timeline-item" th:each="h : ${history}">
+                <div class="time" th:text="${#temporals.format(h.createdAt, 'dd-MM-yyyy HH:mm')}"></div>
+                <div class="status-change">
+                    <span th:if="${h.previousStatus != null}" th:text="${h.previousStatus}"></span>
+                    <span th:if="${h.previousStatus != null}"> → </span>
+                    <span th:text="${h.newStatus}"></span>
+                </div>
+                <div class="remarks" th:if="${h.remarks}" th:text="${h.remarks}"></div>
+                <div class="text-muted" style="font-size:0.8rem;" th:text="'By: ' + ${h.updatedBy}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 Campus Complaint Management System</p>
+</footer>
+</body>
+</html>

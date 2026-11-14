@@ -1,0 +1,418 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Campus Complaint Management API",
+		"description": "Complete REST API collection for Campus Complaint Management System covering Auth, Users, Complaints, Categories, Maintenance, History, and Admin Dashboard.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"student1\",\n    \"password\": \"student123\",\n    \"email\": \"student1@campus.edu\",\n    \"fullName\": \"Jane Student\",\n    \"phone\": \"9876543210\",\n    \"department\": \"Computer Science\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
+						},
+						"description": "Register a new student account (public endpoint)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get Maintenance Staff (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/users/staff",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "staff"]
+						}
+					}
+				},
+				{
+					"name": "Get User By ID (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/users/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Complaints",
+			"item": [
+				{
+					"name": "Create Complaint (Student)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{studentUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{studentPassword}}", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Water Leakage in Lab 204\",\n    \"description\": \"There is a continuous water leak from the ceiling in Room 204 near row 3.\",\n    \"location\": \"Academic Block B, Room 204\",\n    \"categoryId\": 1,\n    \"priority\": \"HIGH\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints"]
+						}
+					}
+				},
+				{
+					"name": "Get My Complaints (Student)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{studentUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{studentPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/my",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints", "my"]
+						}
+					}
+				},
+				{
+					"name": "Get Complaint By ID",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{studentUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{studentPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get All Complaints (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints"]
+						}
+					}
+				},
+				{
+					"name": "Assign Complaint (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"staffId\": 2,\n    \"remarks\": \"Please inspect the plumbing leak ASAP.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/1/assign",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints", "1", "assign"]
+						}
+					}
+				},
+				{
+					"name": "Update Status (Staff/Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{staffUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{staffPassword}}", "type": "string" }
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"IN_PROGRESS\",\n    \"remarks\": \"Inspected pipe, replacing broken valve.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints", "1", "status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Get Active Categories",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{studentUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{studentPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/categories",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Create Category (Admin)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/api/categories?name=Carpentry&description=Woodwork and repairs",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "categories"],
+							"query": [
+								{ "key": "name", "value": "Carpentry" },
+								{ "key": "description", "value": "Woodwork and repairs" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Maintenance",
+			"item": [
+				{
+					"name": "Get My Assignments (Staff)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{staffUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{staffPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/maintenance/my-assignments",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "maintenance", "my-assignments"]
+						}
+					}
+				},
+				{
+					"name": "Update Assignment Status (Staff)",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{staffUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{staffPassword}}", "type": "string" }
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"RESOLVED\",\n    \"remarks\": \"Replaced ceiling pipe and tested drainage. Issue resolved.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/maintenance/complaints/1/status",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "maintenance", "complaints", "1", "status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "History",
+			"item": [
+				{
+					"name": "Get Complaint History",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{studentUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{studentPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/complaints/1/history",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "complaints", "1", "history"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Get Dashboard Statistics",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{ "key": "username", "value": "{{adminUsername}}", "type": "string" },
+								{ "key": "password", "value": "{{adminPassword}}", "type": "string" }
+							]
+						},
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "dashboard", "stats"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "adminUsername",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "adminPassword",
+			"value": "admin123",
+			"type": "string"
+		},
+		{
+			"key": "staffUsername",
+			"value": "staff1",
+			"type": "string"
+		},
+		{
+			"key": "staffPassword",
+			"value": "staff123",
+			"type": "string"
+		},
+		{
+			"key": "studentUsername",
+			"value": "student1",
+			"type": "string"
+		},
+		{
+			"key": "studentPassword",
+			"value": "student123",
+			"type": "string"
+		}
+	]
+}

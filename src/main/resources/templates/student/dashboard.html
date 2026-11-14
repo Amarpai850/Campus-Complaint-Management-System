@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - Campus CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a href="/student/dashboard" class="brand">🏫 Campus CMS</a>
+        <div class="nav-links">
+            <a th:href="@{/student/dashboard}">Dashboard</a>
+            <a th:href="@{/student/complaints/new}">New Complaint</a>
+            <span th:text="'👤 ' + ${username}" style="color:white;"></span>
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-content">
+    <div class="page-header">
+        <h1>📋 My Complaints</h1>
+        <a th:href="@{/student/complaints/new}" class="btn btn-primary">+ New Complaint</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <div th:if="${#lists.isEmpty(complaints)}" class="card text-center">
+        <p class="text-muted">You haven't submitted any complaints yet.</p>
+        <a th:href="@{/student/complaints/new}" class="btn btn-primary mt-2">Submit Your First Complaint</a>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(complaints)}" class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="c : ${complaints}">
+                    <td th:text="${c.id}"></td>
+                    <td th:text="${c.title}"></td>
+                    <td th:text="${c.categoryName}"></td>
+                    <td th:text="${c.location}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${c.status.name() == 'PENDING' ? 'badge-pending' :
+                                               c.status.name() == 'ASSIGNED' ? 'badge-assigned' :
+                                               c.status.name() == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                               c.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'}"
+                              th:text="${c.status}"></span>
+                    </td>
+                    <td th:text="${#temporals.format(c.createdAt, 'dd-MM-yyyy')}"></td>
+                    <td><a th:href="@{/student/complaints/{id}(id=${c.id})}" class="btn btn-sm btn-primary">View</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 Campus Complaint Management System</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Complaint - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a href="/admin/dashboard" class="brand">🏫 Campus CMS (Admin)</a>
+        <div class="nav-links">
+            <a th:href="@{/admin/dashboard}">Complaints</a>
+            <a th:href="@{/admin/users}">Users</a>
+            <a th:href="@{/admin/categories}">Categories</a>
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-content">
+    <div class="page-header">
+        <h1>⚙️ Manage Complaint #<span th:text="${complaint.id}"></span></h1>
+        <a th:href="@{/admin/dashboard}" class="btn btn-secondary">← Back to Complaints</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <!-- Info Overview -->
+    <div class="card">
+        <div class="card-header" th:text="${complaint.title}"></div>
+
+        <div class="detail-grid">
+            <div class="detail-item">
+                <div class="label">Status</div>
+                <div class="value">
+                    <span class="badge"
+                          th:classappend="${complaint.status.name() == 'PENDING' ? 'badge-pending' :
+                                           complaint.status.name() == 'ASSIGNED' ? 'badge-assigned' :
+                                           complaint.status.name() == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                           complaint.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'}"
+                          th:text="${complaint.status}"></span>
+                </div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Priority</div>
+                <div class="value" th:text="${complaint.priority}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Category</div>
+                <div class="value" th:text="${complaint.categoryName != null ? complaint.categoryName : 'Uncategorized'}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Location</div>
+                <div class="value" th:text="${complaint.location}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Submitted By</div>
+                <div class="value" th:text="${complaint.userName}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Assigned Staff</div>
+                <div class="value" th:text="${complaint.assignedStaffName != null ? complaint.assignedStaffName : 'Unassigned'}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Date Created</div>
+                <div class="value" th:text="${#temporals.format(complaint.createdAt, 'dd-MM-yyyy HH:mm')}"></div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Date Resolved</div>
+                <div class="value" th:text="${complaint.resolvedAt != null ? #temporals.format(complaint.resolvedAt, 'dd-MM-yyyy HH:mm') : 'Not resolved yet'}"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="label">Detailed Description</div>
+            <p th:text="${complaint.description}" style="margin-top:6px; white-space: pre-wrap;"></p>
+        </div>
+    </div>
+
+    <!-- Administrative Action Forms -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Assign Staff Form -->
+        <div class="card">
+            <div class="card-header">👷 Assign to Maintenance Staff</div>
+            <form th:action="@{/admin/complaints/{id}/assign(id=${complaint.id})}" method="post">
+                <div class="form-group">
+                    <label for="staffId">Select Staff Member</label>
+                    <select id="staffId" name="staffId" class="form-control" required>
+                        <option value="">-- Choose Staff --</option>
+                        <option th:each="s : ${staff}" th:value="${s.id}" th:text="${s.fullName + ' (' + (s.department != null ? s.department : 'General') + ')'}"
+                                th:selected="${s.id == complaint.assignedStaffId}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignRemarks">Assignment Remarks</label>
+                    <input type="text" id="assignRemarks" name="remarks" class="form-control" placeholder="Optional instructions for staff">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Confirm Assignment</button>
+            </form>
+        </div>
+
+        <!-- Update Status Form -->
+        <div class="card">
+            <div class="card-header">🔄 Update Lifecycle Status</div>
+            <form th:action="@{/admin/complaints/{id}/status(id=${complaint.id})}" method="post">
+                <div class="form-group">
+                    <label for="status">Select New Status</label>
+                    <select id="status" name="status" class="form-control" required>
+                        <option value="PENDING" th:selected="${complaint.status.name() == 'PENDING'}">PENDING</option>
+                        <option value="ASSIGNED" th:selected="${complaint.status.name() == 'ASSIGNED'}">ASSIGNED</option>
+                        <option value="IN_PROGRESS" th:selected="${complaint.status.name() == 'IN_PROGRESS'}">IN_PROGRESS</option>
+                        <option value="RESOLVED" th:selected="${complaint.status.name() == 'RESOLVED'}">RESOLVED</option>
+                        <option value="CLOSED" th:selected="${complaint.status.name() == 'CLOSED'}">CLOSED</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statusRemarks">Status Remarks</label>
+                    <input type="text" id="statusRemarks" name="remarks" class="form-control" placeholder="Reason or update notes">
+                </div>
+                <button type="submit" class="btn btn-warning btn-block">Update Status</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit / History Timeline -->
+    <div class="card mt-4">
+        <div class="card-header">📜 Audit & Status History</div>
+        <div th:if="${#lists.isEmpty(history)}" class="text-muted">No history logs available.</div>
+        <div class="timeline" th:unless="${#lists.isEmpty(history)}">
+            <div class="timeline-item" th:each="h : ${history}">
+                <div class="time" th:text="${#temporals.format(h.createdAt, 'dd-MM-yyyy HH:mm:ss')}"></div>
+                <div class="status-change">
+                    <span th:if="${h.previousStatus != null}" th:text="${h.previousStatus}"></span>
+                    <span th:if="${h.previousStatus != null}"> ➔ </span>
+                    <span class="badge"
+                          th:classappend="${h.newStatus.name() == 'PENDING' ? 'badge-pending' :
+                                           h.newStatus.name() == 'ASSIGNED' ? 'badge-assigned' :
+                                           h.newStatus.name() == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                           h.newStatus.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'}"
+                          th:text="${h.newStatus}"></span>
+                </div>
+                <div class="remarks" th:if="${h.remarks}" th:text="${h.remarks}"></div>
+                <div class="text-muted" style="font-size:0.8rem;" th:text="'Updated by: ' + ${h.updatedBy}"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 Campus Complaint Management System - Admin Portal</p>
+</footer>
+</body>
+</html>

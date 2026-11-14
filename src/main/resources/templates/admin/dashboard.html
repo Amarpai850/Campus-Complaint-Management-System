@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Campus CMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <a href="/admin/dashboard" class="brand">🏫 Campus CMS (Admin)</a>
+        <div class="nav-links">
+            <a th:href="@{/admin/dashboard}">Complaints</a>
+            <a th:href="@{/admin/users}">Users</a>
+            <a th:href="@{/admin/categories}">Categories</a>
+            <a th:href="@{/logout}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container main-content">
+    <div class="page-header">
+        <h1>📊 Administrator Dashboard</h1>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" th:text="${stats.totalComplaints}">0</div>
+            <div class="stat-label">Total Complaints</div>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-value" th:text="${stats.pendingComplaints}">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card assigned">
+            <div class="stat-value" th:text="${stats.assignedComplaints}">0</div>
+            <div class="stat-label">Assigned</div>
+        </div>
+        <div class="stat-card in-progress">
+            <div class="stat-value" th:text="${stats.inProgressComplaints}">0</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card resolved">
+            <div class="stat-value" th:text="${stats.resolvedComplaints}">0</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+        <div class="stat-card closed">
+            <div class="stat-value" th:text="${stats.closedComplaints}">0</div>
+            <div class="stat-label">Closed</div>
+        </div>
+    </div>
+
+    <!-- Additional user metrics -->
+    <div class="card mb-4">
+        <div class="card-header">👥 Registered Users Summary</div>
+        <div style="display: flex; gap: 30px; font-weight: 500;">
+            <div>Total Users: <strong th:text="${stats.totalUsers}">0</strong></div>
+            <div>Students: <strong th:text="${stats.totalStudents}">0</strong></div>
+            <div>Maintenance Staff: <strong th:text="${stats.totalStaff}">0</strong></div>
+            <div>Admins: <strong th:text="${stats.totalAdmins}">0</strong></div>
+        </div>
+    </div>
+
+    <!-- Complaints Management Table -->
+    <div class="card">
+        <div class="card-header">All Submitted Complaints</div>
+        <div th:if="${#lists.isEmpty(complaints)}" class="text-muted text-center py-4">
+            No complaints found in the system.
+        </div>
+        <div th:unless="${#lists.isEmpty(complaints)}" class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>User</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Priority</th>
+                        <th>Assigned Staff</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${complaints}">
+                        <td th:text="${c.id}"></td>
+                        <td th:text="${c.title}"></td>
+                        <td th:text="${c.userName}"></td>
+                        <td th:text="${c.categoryName != null ? c.categoryName : '-'}"></td>
+                        <td th:text="${c.location}"></td>
+                        <td th:text="${c.priority}"></td>
+                        <td th:text="${c.assignedStaffName != null ? c.assignedStaffName : 'Unassigned'}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${c.status.name() == 'PENDING' ? 'badge-pending' :
+                                                   c.status.name() == 'ASSIGNED' ? 'badge-assigned' :
+                                                   c.status.name() == 'IN_PROGRESS' ? 'badge-in-progress' :
+                                                   c.status.name() == 'RESOLVED' ? 'badge-resolved' : 'badge-closed'}"
+                                  th:text="${c.status}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(c.createdAt, 'dd-MM-yyyy HH:mm')}"></td>
+                        <td>
+                            <a th:href="@{/admin/complaints/{id}(id=${c.id})}" class="btn btn-sm btn-primary">Manage</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 Campus Complaint Management System - Admin Portal</p>
+</footer>
+</body>
+</html>

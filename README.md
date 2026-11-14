@@ -456,7 +456,9 @@ Configure these environment variables in your cloud hosting control panel. **Nev
 |---|---|---|---|
 | `PORT` | Auto | Application port | `8080` (Automatically injected by Render/Railway) |
 | `SPRING_PROFILES_ACTIVE` | Yes | Active Spring profile | `prod` |
-| `DB_URL` | Yes | Full JDBC Connection URL with TLS/SSL | `jdbc:mysql://<host>:<port>/campus_complaints?useSSL=true&requireSSL=true` |
+| `DB_HOST` | Yes | TiDB Cloud Gateway hostname | `<tidb-gateway-host>` |
+| `DB_PORT` | Optional | TiDB Cloud Gateway port | `4000` (Defaults to 4000) |
+| `DB_NAME` | Optional | Production database name | `campus_complaints` (Defaults to campus_complaints) |
 | `DB_USERNAME` | Yes | Database user | `<cloud_db_username>` |
 | `DB_PASSWORD` | Yes | Database password | `<cloud_db_password>` |
 | `ADMIN_INITIAL_PASSWORD` | Optional | Secure initial password for admin | `<strong_random_password>` (Defaults to `admin123` with warning) |
@@ -464,8 +466,9 @@ Configure these environment variables in your cloud hosting control panel. **Nev
 
 ### 16.2. Production vs Local Profile Differences
 
-- **`application.properties` (Base):** Configured with variable substitution `${DB_URL:...}` and dynamic `${PORT:8080}`.
+- **`application.properties` (Base):** Configured with dynamic `${PORT:8080}` and local MySQL defaults.
 - **`application-prod.properties` (Active in Cloud):**
+  - JDBC URL constructed from `${DB_HOST}`, `${DB_PORT:4000}`, `${DB_NAME:campus_complaints}` with TLS/SSL `sslMode=VERIFY_IDENTITY`.
   - `spring.thymeleaf.cache=true` for lightning-fast template rendering.
   - `server.error.include-stacktrace=never` to prevent sensitive internal stack trace exposure.
   - `spring.jpa.hibernate.ddl-auto=update` for safe, non-destructive schema evolution.
@@ -477,17 +480,19 @@ Configure these environment variables in your cloud hosting control panel. **Nev
 1. Sign up for free at [TiDB Cloud](https://tidbcloud.com) (No credit card required).
 2. Click **Create Cluster** ➔ Select **Serverless (Free Forever, 5 GiB)**.
 3. Click **Connect** ➔ Choose **JDBC (Java)**.
-4. Note down the Host, Port, Database name, Username, and Password.
+4. Note down the Host, Port (4000), Database name (`campus_complaints`), Username, and Password.
 
 #### Step 2: Deploy Web Service on Render
 1. Sign up for free at [Render](https://render.com) using your GitHub account.
 2. Click **New +** ➔ **Web Service**.
 3. Select your repository: `Amarpai850/Campus-Complaint-Management-System`.
-4. Choose **Docker** runtime (Render automatically detects the multi-stage `Dockerfile`).
-5. Under **Environment Variables**, add:
+4. Choose **Docker** runtime (Render automatically detects the multi-stage `Dockerfile` and `render.yaml`).
+5. Under **Environment Variables**, provide:
    - `SPRING_PROFILES_ACTIVE` = `prod`
-   - `DB_URL` = `jdbc:mysql://<tidb-host>:4000/campus_complaints?useSSL=true&requireSSL=true`
-   - `DB_USERNAME` = `<tidb-user>`
+   - `DB_HOST` = `<tidb-gateway-host>`
+   - `DB_PORT` = `4000`
+   - `DB_NAME` = `campus_complaints`
+   - `DB_USERNAME` = `<tidb-username>`
    - `DB_PASSWORD` = `<tidb-password>`
    - `ADMIN_INITIAL_PASSWORD` = `<your-admin-password>`
 6. Click **Create Web Service**.

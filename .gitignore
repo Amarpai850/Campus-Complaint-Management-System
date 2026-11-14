@@ -50,11 +50,15 @@ build/
 application-local.properties
 application-*.properties
 !src/main/resources/application.properties
+!src/main/resources/application-prod.properties
 !src/test/resources/application-test.properties
 secrets/
 *.pem
 *.key
 credentials.json
+hs_err_*.log
+replay_*.log
+start-campus-system.bat
 
 ### Scratch & Local Test Dumps ###
 scratch/

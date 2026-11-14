@@ -5,24 +5,24 @@ An enterprise-ready, full-stack campus operations system designed for engineerin
 ---
 
 ## 📑 Table of Contents
-1. [Project Overview](#project-overview)
-2. [Key Features](#key-features)
-3. [Technology Stack](#technology-stack)
-4. [System Architecture](#system-architecture)
-5. [Database Schema & Entity Relationships](#database-schema--entity-relationships)
-6. [User Roles & Permissions](#user-roles--permissions)
-7. [End-to-End Workflow](#end-to-end-workflow)
-8. [Project Structure](#project-structure)
-9. [Prerequisites & System Requirements](#prerequisites--system-requirements)
-10. [Database Setup & Configuration](#database-setup--configuration)
-11. [How to Run the Application](#how-to-run-the-application)
-12. [Default Test Credentials](#default-test-credentials)
-13. [User Interface Previews](#user-interface-previews)
-14. [REST API Documentation](#rest-api-documentation)
-15. [Postman Setup & Usage](#postman-setup--usage)
-16. [Automated Testing](#automated-testing)
-17. [Troubleshooting Guide](#troubleshooting-guide)
-18. [Team Contribution & Module Breakdown](#team-contribution--module-breakdown)
+1. [Project Overview](#1-project-overview)
+2. [Key Features](#2-key-features)
+3. [Technology Stack](#3-technology-stack)
+4. [System Architecture](#4-system-architecture)
+5. [Database Schema & Entity Relationships](#5-database-schema--entity-relationships)
+6. [User Roles & Permissions](#6-user-roles--permissions)
+7. [End-to-End Workflow](#7-end-to-end-workflow)
+8. [Prerequisites & System Requirements](#8-prerequisites--system-requirements)
+9. [Database Setup & Configuration](#9-database-setup--configuration)
+10. [How to Run the Application](#10-how-to-run-the-application)
+11. [Default Test Credentials](#11-default-test-credentials)
+12. [User Interface Previews](#12-user-interface-previews)
+13. [REST API Documentation](#13-rest-api-documentation)
+14. [Postman Setup & Usage](#14-postman-setup--usage)
+15. [Automated Testing](#15-automated-testing)
+16. [Cloud Deployment Architecture & Guide](#16-cloud-deployment-architecture--guide)
+17. [Troubleshooting Guide](#17-troubleshooting-guide)
+18. [Team Contribution & Module Breakdown](#18-team-contribution--module-breakdown)
 
 ---
 
@@ -389,7 +389,7 @@ All REST APIs are under `/api/` and support JSON request/response bodies with HT
 
 ---
 
-## 13. Postman Setup & Usage
+## 14. Postman Setup & Usage
 
 A fully configured Postman collection and environment are included in the repository:
 
@@ -407,7 +407,7 @@ A fully configured Postman collection and environment are included in the reposi
 
 ---
 
-## 14. Automated Testing
+## 15. Automated Testing
 
 The project includes unit and integration tests using JUnit 5, Mockito, and Spring Boot Test:
 
@@ -423,7 +423,79 @@ mvn test
 
 ---
 
-## 15. Troubleshooting Guide
+## 16. Cloud Deployment Architecture & Guide
+
+The system is configured for seamless deployment to modern containerized cloud platforms (Render, Railway, Fly.io, AWS ECS) with a managed cloud MySQL database.
+
+```
+┌─────────────────────────────────┐
+│     Cloud Web Service           │
+│   (Render / Railway / Docker)   │
+│  - Spring Boot 3.4.1 (Java 17)  │
+│  - Dynamic PORT Binding ($PORT) │
+│  - Health Check: /api/health    │
+│  - Profile: prod                │
+└────────────────┬────────────────┘
+                 │ Secure TLS/SSL (JDBC)
+                 ▼
+┌─────────────────────────────────┐
+│    Cloud MySQL Database         │
+│  (TiDB Cloud Serverless /       │
+│   Railway Managed MySQL)        │
+│  - Automatic schema update      │
+│  - Auto-seeded categories       │
+│  - 24/7 Persistent Storage     │
+└─────────────────────────────────┘
+```
+
+### 16.1. Environment Variables Reference
+
+Configure these environment variables in your cloud hosting control panel. **Never check real passwords into source control.**
+
+| Variable Name | Required | Description | Example / Recommended Value |
+|---|---|---|---|
+| `PORT` | Auto | Application port | `8080` (Automatically injected by Render/Railway) |
+| `SPRING_PROFILES_ACTIVE` | Yes | Active Spring profile | `prod` |
+| `DB_URL` | Yes | Full JDBC Connection URL with TLS/SSL | `jdbc:mysql://<host>:<port>/campus_complaints?useSSL=true&requireSSL=true` |
+| `DB_USERNAME` | Yes | Database user | `<cloud_db_username>` |
+| `DB_PASSWORD` | Yes | Database password | `<cloud_db_password>` |
+| `ADMIN_INITIAL_PASSWORD` | Optional | Secure initial password for admin | `<strong_random_password>` (Defaults to `admin123` with warning) |
+| `STAFF_INITIAL_PASSWORD` | Optional | Secure initial password for staff1 | `<strong_random_password>` (Defaults to `staff123`) |
+
+### 16.2. Production vs Local Profile Differences
+
+- **`application.properties` (Base):** Configured with variable substitution `${DB_URL:...}` and dynamic `${PORT:8080}`.
+- **`application-prod.properties` (Active in Cloud):**
+  - `spring.thymeleaf.cache=true` for lightning-fast template rendering.
+  - `server.error.include-stacktrace=never` to prevent sensitive internal stack trace exposure.
+  - `spring.jpa.hibernate.ddl-auto=update` for safe, non-destructive schema evolution.
+  - Log levels set to `INFO` for application and `WARN` for Hibernate/Security to conserve memory.
+
+### 16.3. Step-by-Step Free Cloud Deployment (Render + TiDB Cloud)
+
+#### Step 1: Create Free Cloud MySQL Database (TiDB Cloud Serverless)
+1. Sign up for free at [TiDB Cloud](https://tidbcloud.com) (No credit card required).
+2. Click **Create Cluster** ➔ Select **Serverless (Free Forever, 5 GiB)**.
+3. Click **Connect** ➔ Choose **JDBC (Java)**.
+4. Note down the Host, Port, Database name, Username, and Password.
+
+#### Step 2: Deploy Web Service on Render
+1. Sign up for free at [Render](https://render.com) using your GitHub account.
+2. Click **New +** ➔ **Web Service**.
+3. Select your repository: `Amarpai850/Campus-Complaint-Management-System`.
+4. Choose **Docker** runtime (Render automatically detects the multi-stage `Dockerfile`).
+5. Under **Environment Variables**, add:
+   - `SPRING_PROFILES_ACTIVE` = `prod`
+   - `DB_URL` = `jdbc:mysql://<tidb-host>:4000/campus_complaints?useSSL=true&requireSSL=true`
+   - `DB_USERNAME` = `<tidb-user>`
+   - `DB_PASSWORD` = `<tidb-password>`
+   - `ADMIN_INITIAL_PASSWORD` = `<your-admin-password>`
+6. Click **Create Web Service**.
+7. Render will build the container, start the Spring Boot app, verify `/api/health`, and issue a live HTTPS URL (e.g. `https://campus-complaint-management.onrender.com`).
+
+---
+
+## 17. Troubleshooting Guide
 
 ### 1. `Access denied for user 'root'@'localhost'`
 - **Cause:** Incorrect MySQL root password.
@@ -439,7 +511,7 @@ mvn test
 
 ---
 
-## 16. Team Contribution & Module Breakdown
+## 18. Team Contribution & Module Breakdown
 
 *Developed by a 5-member Computer Science & Engineering team:*
 

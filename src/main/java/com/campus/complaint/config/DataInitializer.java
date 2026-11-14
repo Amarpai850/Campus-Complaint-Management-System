@@ -10,12 +10,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Arrays;
 
 /**
  * Initializes default data on first run:
- * - Default admin account
- * - Default maintenance staff account
+ * - Default admin account (secure in production via ADMIN_INITIAL_PASSWORD)
+ * - Default maintenance staff account (secure in production via STAFF_INITIAL_PASSWORD)
  * - Default complaint categories
  */
 @Configuration
@@ -26,32 +29,61 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initData(UserRepository userRepository,
                                       CategoryRepository categoryRepository,
-                                      PasswordEncoder passwordEncoder) {
+                                      PasswordEncoder passwordEncoder,
+                                      Environment environment) {
         return args -> {
-            // Create default admin if not present
+            boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+
+            // --- ADMIN ACCOUNT INITIALIZATION ---
             if (!userRepository.existsByUsername("admin")) {
+                String adminPassword = System.getenv("ADMIN_INITIAL_PASSWORD");
+                if (adminPassword == null || adminPassword.isBlank()) {
+                    if (isProd) {
+                        throw new IllegalStateException(
+                            "PRODUCTION SECURITY ERROR: The 'ADMIN_INITIAL_PASSWORD' environment variable must be set " +
+                            "to initialize the admin account in production. Default development credentials ('admin123') " +
+                            "are strictly prohibited in the production profile."
+                        );
+                    }
+                    adminPassword = "admin123";
+                    log.warn("DEVELOPMENT NOTICE: Default dev credentials ('admin123') used for admin account.");
+                }
+
                 User admin = new User();
                 admin.setUsername("admin");
-                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setPassword(passwordEncoder.encode(adminPassword));
                 admin.setEmail("admin@campus.edu");
                 admin.setFullName("System Administrator");
                 admin.setRole(Role.ADMIN);
                 admin.setDepartment("Administration");
                 userRepository.save(admin);
-                log.info("Default admin account created (username: admin, password: admin123)");
+                log.info("Admin account initialized (username: admin)");
             }
 
-            // Create default maintenance staff if not present
+            // --- MAINTENANCE STAFF ACCOUNT INITIALIZATION ---
             if (!userRepository.existsByUsername("staff1")) {
+                String staffPassword = System.getenv("STAFF_INITIAL_PASSWORD");
+                if (staffPassword == null || staffPassword.isBlank()) {
+                    if (isProd) {
+                        throw new IllegalStateException(
+                            "PRODUCTION SECURITY ERROR: The 'STAFF_INITIAL_PASSWORD' environment variable must be set " +
+                            "to initialize the staff account in production. Default development credentials ('staff123') " +
+                            "are strictly prohibited in the production profile."
+                        );
+                    }
+                    staffPassword = "staff123";
+                    log.warn("DEVELOPMENT NOTICE: Default dev credentials ('staff123') used for staff account.");
+                }
+
                 User staff = new User();
                 staff.setUsername("staff1");
-                staff.setPassword(passwordEncoder.encode("staff123"));
+                staff.setPassword(passwordEncoder.encode(staffPassword));
                 staff.setEmail("staff1@campus.edu");
                 staff.setFullName("John Maintenance");
                 staff.setRole(Role.MAINTENANCE_STAFF);
                 staff.setDepartment("Maintenance");
                 userRepository.save(staff);
-                log.info("Default maintenance staff account created (username: staff1, password: staff123)");
+                log.info("Maintenance staff account initialized (username: staff1)");
             }
 
             // Create default categories if none exist

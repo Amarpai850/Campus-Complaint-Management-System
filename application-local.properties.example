@@ -1,0 +1,12 @@
+# ===================================================================
+# LOCAL DEVELOPMENT CONFIGURATION TEMPLATE
+# Copy this file to application-local.properties (ignored by Git)
+# ===================================================================
+
+# Local MySQL credentials
+spring.datasource.username=root
+spring.datasource.password=your_local_mysql_password_here
+
+# Local debug logging
+logging.level.com.campus.complaint=DEBUG
+spring.jpa.show-sql=true

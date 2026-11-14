@@ -3,7 +3,20 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+### Logs ###
+*.log
+logs/
+*.dump
+*.dumpstream
+
+### OS Temporary Files ###
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+*.bak
+
+### STS & Eclipse ###
 .apt_generated
 .classpath
 .factorypath
@@ -13,7 +26,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -31,6 +44,18 @@ build/
 ### VS Code ###
 .vscode/
 
-### Secrets & Environment ###
+### Secrets, Credentials & Local Config ###
 .env
+.env.*
 application-local.properties
+application-*.properties
+!src/main/resources/application.properties
+!src/test/resources/application-test.properties
+secrets/
+*.pem
+*.key
+credentials.json
+
+### Scratch & Local Test Dumps ###
+scratch/
+test-results/

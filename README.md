@@ -16,12 +16,13 @@ An enterprise-ready, full-stack campus operations system designed for engineerin
 9. [Prerequisites & System Requirements](#prerequisites--system-requirements)
 10. [Database Setup & Configuration](#database-setup--configuration)
 11. [How to Run the Application](#how-to-run-the-application)
-12. [Default Credentials](#default-credentials)
-13. [REST API Documentation](#rest-api-documentation)
-14. [Postman Setup & Usage](#postman-setup--usage)
-15. [Automated Testing](#automated-testing)
-16. [Troubleshooting Guide](#troubleshooting-guide)
-17. [Team Contribution & Module Breakdown](#team-contribution--module-breakdown)
+12. [Default Test Credentials](#default-test-credentials)
+13. [User Interface Previews](#user-interface-previews)
+14. [REST API Documentation](#rest-api-documentation)
+15. [Postman Setup & Usage](#postman-setup--usage)
+16. [Automated Testing](#automated-testing)
+17. [Troubleshooting Guide](#troubleshooting-guide)
+18. [Team Contribution & Module Breakdown](#team-contribution--module-breakdown)
 
 ---
 
@@ -316,19 +317,33 @@ Once running, access the web UI at: **`http://localhost:8080`**
 
 ---
 
-## 11. Default Credentials
+## 11. Default Test Credentials
 
-On initial startup, `DataInitializer` automatically seeds default accounts and categories if the database is fresh:
+On initial startup, `DataInitializer` automatically seeds default test accounts and categories if the database is fresh:
 
 | Role | Username | Password | Purpose |
 |---|---|---|---|
 | **Administrator** | `admin` | `admin123` | System administration & assigning complaints |
 | **Maintenance Staff** | `staff1` | `staff123` | Performing repairs & updating status |
-| **New Student** | *(Self-register)* | *(Your choice)* | Register via `/register` |
+| **New Student** | *(Self-register)* | *(Your choice)* | Register via `/register` or `/api/auth/register` |
+
+> ⚠️ **SECURITY WARNING:**  
+> The default credentials above (`admin123`, `staff123`) are provided strictly for local development, academic demonstration, and evaluation testing. In any real-world or production deployment, these default passwords **MUST** be changed immediately, and administrative access should be restricted behind multi-factor authentication and strong secret policies.
 
 ---
 
-## 12. REST API Documentation
+## 12. User Interface Previews
+
+| Screen | Description | Preview |
+|---|---|---|
+| **Student Portal** | Submit new complaints, choose categories, track real-time resolution badges. | `[Student Dashboard Screenshot Placeholder: /docs/screenshots/student-dashboard.png]` |
+| **Admin Command Center** | Comprehensive metrics (Pending, In Progress, Resolved), department distribution, staff assignment. | `[Admin Dashboard Screenshot Placeholder: /docs/screenshots/admin-dashboard.png]` |
+| **Staff Task Board** | Specialized maintenance workspace to update work progress and append repair notes. | `[Staff Workspace Screenshot Placeholder: /docs/screenshots/staff-dashboard.png]` |
+| **Audit Timeline** | Full chronological transparency showing who changed what, when, and with what remarks. | `[Audit Timeline Screenshot Placeholder: /docs/screenshots/audit-timeline.png]` |
+
+---
+
+## 13. REST API Documentation
 
 All REST APIs are under `/api/` and support JSON request/response bodies with HTTP Basic Authentication.
 

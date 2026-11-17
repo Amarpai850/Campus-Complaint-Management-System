@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,9 +22,12 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -124,5 +128,41 @@ class ComplaintControllerTest {
         mockMvc.perform(get("/api/complaints"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = {"STUDENT"})
+    @DisplayName("API returns 403 JSON when accessing another user's complaint")
+    void testGetComplaintById_Forbidden() throws Exception {
+        when(complaintService.getComplaintById(1L, "student2"))
+                .thenThrow(new AccessDeniedException("You do not have permission to access this complaint"));
+
+        mockMvc.perform(get("/api/complaints/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = {"STUDENT"})
+    @DisplayName("Web view forwards to access-denied page when accessing another user's complaint")
+    void testWebViewComplaint_Forbidden() throws Exception {
+        when(complaintService.getComplaintById(1L, "student2"))
+                .thenThrow(new AccessDeniedException("You do not have permission to access this complaint"));
+
+        mockMvc.perform(get("/student/complaints/1"))
+                .andExpect(status().isForbidden())
+                .andExpect(forwardedUrl("/access-denied"));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = {"STUDENT"})
+    @DisplayName("Logout requires POST with CSRF token")
+    void testLogout_RequiresPostWithCsrf() throws Exception {
+        mockMvc.perform(post("/logout"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/logout").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?logout=true"));
     }
 }

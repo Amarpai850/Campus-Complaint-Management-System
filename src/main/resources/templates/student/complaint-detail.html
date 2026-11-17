@@ -13,7 +13,7 @@
         <div class="nav-links">
             <a th:href="@{/student/dashboard}">Dashboard</a>
             <a th:href="@{/student/complaints/new}">New Complaint</a>
-            <a th:href="@{/logout}">Logout</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;"><button type="submit">Logout</button></form>
         </div>
     </div>
 </nav>

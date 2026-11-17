@@ -14,7 +14,7 @@
             <a th:href="@{/student/dashboard}">Dashboard</a>
             <a th:href="@{/student/complaints/new}">New Complaint</a>
             <span th:text="'👤 ' + ${username}" style="color:white;"></span>
-            <a th:href="@{/logout}">Logout</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;"><button type="submit">Logout</button></form>
         </div>
     </div>
 </nav>

@@ -50,8 +50,8 @@ public class ComplaintController {
      * Get a specific complaint by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getComplaintById(@PathVariable Long id) {
-        ComplaintResponse complaint = complaintService.getComplaintById(id);
+    public ResponseEntity<ApiResponse> getComplaintById(@PathVariable Long id, Authentication auth) {
+        ComplaintResponse complaint = complaintService.getComplaintById(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.success("Complaint retrieved", complaint));
     }
 
@@ -102,8 +102,8 @@ public class ComplaintController {
      * Get complaint history.
      */
     @GetMapping("/{id}/history")
-    public ResponseEntity<ApiResponse> getComplaintHistory(@PathVariable Long id) {
-        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id);
+    public ResponseEntity<ApiResponse> getComplaintHistory(@PathVariable Long id, Authentication auth) {
+        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id, auth.getName());
         return ResponseEntity.ok(ApiResponse.success("Complaint history retrieved", history));
     }
 }

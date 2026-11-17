@@ -4,6 +4,7 @@ import com.campus.complaint.dto.*;
 import com.campus.complaint.entity.*;
 import com.campus.complaint.service.*;
 import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Controller;
@@ -119,9 +120,9 @@ public class WebController {
     }
 
     @GetMapping("/student/complaints/{id}")
-    public String viewComplaint(@PathVariable Long id, Model model) {
-        ComplaintResponse complaint = complaintService.getComplaintById(id);
-        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id);
+    public String viewComplaint(@PathVariable Long id, Authentication auth, Model model) {
+        ComplaintResponse complaint = complaintService.getComplaintById(id, auth.getName());
+        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id, auth.getName());
         model.addAttribute("complaint", complaint);
         model.addAttribute("history", history);
         return "student/complaint-detail";
@@ -139,9 +140,9 @@ public class WebController {
     }
 
     @GetMapping("/admin/complaints/{id}")
-    public String adminComplaintDetail(@PathVariable Long id, Model model) {
-        ComplaintResponse complaint = complaintService.getComplaintById(id);
-        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id);
+    public String adminComplaintDetail(@PathVariable Long id, Authentication auth, Model model) {
+        ComplaintResponse complaint = complaintService.getComplaintById(id, auth.getName());
+        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id, auth.getName());
         List<UserResponse> staff = userService.getMaintenanceStaff();
         model.addAttribute("complaint", complaint);
         model.addAttribute("history", history);
@@ -175,6 +176,8 @@ public class WebController {
             request.setRemarks(remarks);
             complaintService.updateComplaintStatus(id, request, auth.getName());
             redirectAttributes.addFlashAttribute("success", "Status updated successfully!");
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
@@ -217,9 +220,9 @@ public class WebController {
     }
 
     @GetMapping("/staff/complaints/{id}")
-    public String staffComplaintDetail(@PathVariable Long id, Model model) {
-        ComplaintResponse complaint = complaintService.getComplaintById(id);
-        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id);
+    public String staffComplaintDetail(@PathVariable Long id, Authentication auth, Model model) {
+        ComplaintResponse complaint = complaintService.getComplaintById(id, auth.getName());
+        List<ComplaintHistoryResponse> history = complaintService.getComplaintHistory(id, auth.getName());
         model.addAttribute("complaint", complaint);
         model.addAttribute("history", history);
         return "staff/complaint-detail";
@@ -235,6 +238,8 @@ public class WebController {
             request.setRemarks(remarks);
             complaintService.updateComplaintStatus(id, request, auth.getName());
             redirectAttributes.addFlashAttribute("success", "Status updated successfully!");
+        } catch (AccessDeniedException e) {
+            throw e;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }

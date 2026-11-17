@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -123,12 +124,14 @@ class ComplaintServiceTest {
     @DisplayName("Update status: Valid transition ASSIGNED -> IN_PROGRESS")
     void testUpdateStatus_ValidTransition() {
         complaint.setStatus(ComplaintStatus.ASSIGNED);
+        complaint.setAssignedStaff(staff);
 
         StatusUpdateRequest request = new StatusUpdateRequest();
         request.setStatus(ComplaintStatus.IN_PROGRESS);
         request.setRemarks("Started investigation");
 
         when(complaintRepository.findById(100L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByUsername("bob")).thenReturn(Optional.of(staff));
         when(complaintRepository.save(any(Complaint.class))).thenReturn(complaint);
 
         ComplaintResponse response = complaintService.updateComplaintStatus(100L, request, "bob");
@@ -142,14 +145,66 @@ class ComplaintServiceTest {
     @DisplayName("Update status: Invalid transition PENDING -> RESOLVED rejected")
     void testUpdateStatus_InvalidTransition() {
         complaint.setStatus(ComplaintStatus.PENDING);
+        complaint.setAssignedStaff(staff);
 
         StatusUpdateRequest request = new StatusUpdateRequest();
         request.setStatus(ComplaintStatus.RESOLVED);
 
         when(complaintRepository.findById(100L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByUsername("bob")).thenReturn(Optional.of(staff));
 
         assertThrows(InvalidOperationException.class, () ->
                 complaintService.updateComplaintStatus(100L, request, "bob"));
+    }
+
+    @Test
+    @DisplayName("Other student cannot view another student's complaint or history")
+    void testGetComplaintAndHistory_ForbiddenForOtherStudent() {
+        User otherStudent = new User("eve", "pass", "eve@campus.edu", "Eve Student", Role.STUDENT);
+        otherStudent.setId(99L);
+
+        when(complaintRepository.findById(100L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByUsername("eve")).thenReturn(Optional.of(otherStudent));
+
+        assertThrows(AccessDeniedException.class, () -> complaintService.getComplaintById(100L, "eve"));
+        assertThrows(AccessDeniedException.class, () -> complaintService.getComplaintHistory(100L, "eve"));
+    }
+
+    @Test
+    @DisplayName("Unassigned staff cannot update complaint status")
+    void testUpdateStatus_ForbiddenForUnassignedStaff() {
+        User otherStaff = new User("sam", "pass", "sam@campus.edu", "Sam Staff", Role.MAINTENANCE_STAFF);
+        otherStaff.setId(21L);
+        complaint.setStatus(ComplaintStatus.ASSIGNED);
+        complaint.setAssignedStaff(staff);
+
+        StatusUpdateRequest request = new StatusUpdateRequest();
+        request.setStatus(ComplaintStatus.CLOSED);
+
+        when(complaintRepository.findById(100L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByUsername("sam")).thenReturn(Optional.of(otherStaff));
+
+        assertThrows(AccessDeniedException.class, () ->
+                complaintService.updateComplaintStatus(100L, request, "sam"));
+        verify(complaintRepository, never()).save(any(Complaint.class));
+    }
+
+    @Test
+    @DisplayName("Admin can update any complaint status even when unassigned")
+    void testUpdateStatus_AllowedForAdmin() {
+        User admin = new User("admin", "pass", "admin@campus.edu", "Admin", Role.ADMIN);
+        admin.setId(1L);
+        complaint.setStatus(ComplaintStatus.ASSIGNED);
+
+        StatusUpdateRequest request = new StatusUpdateRequest();
+        request.setStatus(ComplaintStatus.IN_PROGRESS);
+
+        when(complaintRepository.findById(100L)).thenReturn(Optional.of(complaint));
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(complaintRepository.save(any(Complaint.class))).thenReturn(complaint);
+
+        ComplaintResponse response = complaintService.updateComplaintStatus(100L, request, "admin");
+        assertEquals(ComplaintStatus.IN_PROGRESS, response.getStatus());
     }
 
     @Test

@@ -14,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +35,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private SessionRegistry sessionRegistry;
 
     @InjectMocks
     private UserService userService;
@@ -126,5 +133,23 @@ class UserServiceTest {
         assertNotNull(response);
         assertEquals(Role.MAINTENANCE_STAFF, sampleUser.getRole());
         verify(userRepository).save(sampleUser);
+    }
+
+    @Test
+    @DisplayName("Disabling a user expires their active sessions")
+    void testToggleUserEnabled_ExpiresActiveSessions() {
+        UserDetails principal = org.springframework.security.core.userdetails.User
+                .withUsername("johndoe").password("encodedSecret").roles("STUDENT").build();
+        SessionInformation session = new SessionInformation(principal, "sess-1", new Date());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+        when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+        when(sessionRegistry.getAllPrincipals()).thenReturn(List.of(principal));
+        when(sessionRegistry.getAllSessions(principal, false)).thenReturn(List.of(session));
+
+        userService.toggleUserEnabled(1L);
+
+        assertFalse(sampleUser.isEnabled());
+        assertTrue(session.isExpired());
     }
 }

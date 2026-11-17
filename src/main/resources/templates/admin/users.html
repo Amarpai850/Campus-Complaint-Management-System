@@ -14,7 +14,7 @@
             <a th:href="@{/admin/dashboard}">Complaints</a>
             <a th:href="@{/admin/users}">Users</a>
             <a th:href="@{/admin/categories}">Categories</a>
-            <a th:href="@{/logout}">Logout</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;"><button type="submit">Logout</button></form>
         </div>
     </div>
 </nav>

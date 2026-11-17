@@ -7,6 +7,9 @@ import com.campus.complaint.entity.User;
 import com.campus.complaint.exception.DuplicateResourceException;
 import com.campus.complaint.exception.ResourceNotFoundException;
 import com.campus.complaint.repository.UserRepository;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +26,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SessionRegistry sessionRegistry;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, SessionRegistry sessionRegistry) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.sessionRegistry = sessionRegistry;
     }
 
     /**
@@ -120,14 +125,27 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         user.setRole(newRole);
-        return toResponse(userRepository.save(user));
+        User saved = userRepository.save(user);
+        expireUserSessions(saved.getUsername());
+        return toResponse(saved);
     }
 
     public void toggleUserEnabled(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         user.setEnabled(!user.isEnabled());
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        expireUserSessions(saved.getUsername());
+    }
+
+    private void expireUserSessions(String username) {
+        for (Object principal : sessionRegistry.getAllPrincipals()) {
+            String principalName = principal instanceof UserDetails ud ? ud.getUsername() : principal.toString();
+            if (username.equals(principalName)) {
+                sessionRegistry.getAllSessions(principal, false)
+                        .forEach(SessionInformation::expireNow);
+            }
+        }
     }
 
     /**

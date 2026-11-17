@@ -12,7 +12,7 @@
         <a href="/staff/dashboard" class="brand">🔧 Campus CMS (Staff Portal)</a>
         <div class="nav-links">
             <a th:href="@{/staff/dashboard}">My Tasks</a>
-            <a th:href="@{/logout}">Logout</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;"><button type="submit">Logout</button></form>
         </div>
     </div>
 </nav>

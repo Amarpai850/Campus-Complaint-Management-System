@@ -4,6 +4,7 @@ import com.campus.complaint.dto.*;
 import com.campus.complaint.entity.*;
 import com.campus.complaint.exception.*;
 import com.campus.complaint.repository.*;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,9 +76,10 @@ public class ComplaintService {
      * Get a complaint by ID.
      */
     @Transactional(readOnly = true)
-    public ComplaintResponse getComplaintById(Long id) {
+    public ComplaintResponse getComplaintById(Long id, String username) {
         Complaint complaint = complaintRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + id));
+        requireViewAccess(complaint, username);
         return toResponse(complaint);
     }
 
@@ -159,6 +161,16 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
 
+        User caller = loadUser(username);
+        if (caller.getRole() != Role.ADMIN) {
+            boolean isAssignedStaff = caller.getRole() == Role.MAINTENANCE_STAFF
+                    && complaint.getAssignedStaff() != null
+                    && username.equals(complaint.getAssignedStaff().getUsername());
+            if (!isAssignedStaff) {
+                throw new AccessDeniedException("You are not assigned to this complaint");
+            }
+        }
+
         ComplaintStatus currentStatus = complaint.getStatus();
         ComplaintStatus newStatus = request.getStatus();
 
@@ -188,11 +200,10 @@ public class ComplaintService {
      * Get complaint history.
      */
     @Transactional(readOnly = true)
-    public List<ComplaintHistoryResponse> getComplaintHistory(Long complaintId) {
-        // Verify complaint exists
-        if (!complaintRepository.existsById(complaintId)) {
-            throw new ResourceNotFoundException("Complaint not found with id: " + complaintId);
-        }
+    public List<ComplaintHistoryResponse> getComplaintHistory(Long complaintId, String username) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new ResourceNotFoundException("Complaint not found with id: " + complaintId));
+        requireViewAccess(complaint, username);
         return historyRepository.findByComplaintIdOrderByCreatedAtAsc(complaintId).stream()
                 .map(this::toHistoryResponse)
                 .collect(Collectors.toList());
@@ -227,6 +238,20 @@ public class ComplaintService {
     }
 
     // ---- Private helpers ----
+
+    private User loadUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+    }
+
+    private void requireViewAccess(Complaint complaint, String username) {
+        User caller = loadUser(username);
+        boolean isCreator = complaint.getUser() != null && username.equals(complaint.getUser().getUsername());
+        boolean isAssigned = complaint.getAssignedStaff() != null && username.equals(complaint.getAssignedStaff().getUsername());
+        if (caller.getRole() != Role.ADMIN && !isCreator && !isAssigned) {
+            throw new AccessDeniedException("You do not have permission to access this complaint");
+        }
+    }
 
     private void recordHistory(Complaint complaint, ComplaintStatus previousStatus,
                                ComplaintStatus newStatus, String remarks, String updatedBy) {

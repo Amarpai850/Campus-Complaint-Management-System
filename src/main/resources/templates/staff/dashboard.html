@@ -13,7 +13,7 @@
         <div class="nav-links">
             <a th:href="@{/staff/dashboard}">My Tasks</a>
             <span th:text="'👷 ' + ${username}" style="color:white;"></span>
-            <a th:href="@{/logout}">Logout</a>
+            <form th:action="@{/logout}" method="post" style="display:inline;"><button type="submit">Logout</button></form>
         </div>
     </div>
 </nav>

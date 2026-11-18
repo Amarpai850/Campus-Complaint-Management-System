@@ -1,5 +1,6 @@
 package com.campus.complaint.service;
 
+import com.campus.complaint.dto.AdminUserForm;
 import com.campus.complaint.dto.RegisterRequest;
 import com.campus.complaint.dto.UserResponse;
 import com.campus.complaint.entity.Role;
@@ -151,5 +152,121 @@ class UserServiceTest {
 
         assertFalse(sampleUser.isEnabled());
         assertTrue(session.isExpired());
+    }
+
+    @Test
+    @DisplayName("Create managed user successfully as maintenance staff")
+    void testCreateManagedUser_Success() {
+        AdminUserForm form = new AdminUserForm();
+        form.setUsername("staff2");
+        form.setEmail("staff2@campus.edu");
+        form.setFullName("Staff Two");
+        form.setPassword("password123");
+        form.setDepartment("Electrical");
+        form.setPhone("9876543210");
+
+        when(userRepository.existsByUsername("staff2")).thenReturn(false);
+        when(userRepository.existsByEmail("staff2@campus.edu")).thenReturn(false);
+        when(passwordEncoder.encode("password123")).thenReturn("encodedStaffPassword");
+
+        User savedStaff = new User();
+        savedStaff.setId(2L);
+        savedStaff.setUsername("staff2");
+        savedStaff.setEmail("staff2@campus.edu");
+        savedStaff.setFullName("Staff Two");
+        savedStaff.setRole(Role.MAINTENANCE_STAFF);
+        savedStaff.setDepartment("Electrical");
+        savedStaff.setEnabled(true);
+
+        when(userRepository.save(any(User.class))).thenReturn(savedStaff);
+
+        UserResponse response = userService.createManagedUser(form, Role.MAINTENANCE_STAFF);
+
+        assertNotNull(response);
+        assertEquals("staff2", response.getUsername());
+        assertEquals(Role.MAINTENANCE_STAFF, response.getRole());
+        verify(passwordEncoder).encode("password123");
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Create managed user fails for invalid role ADMIN")
+    void testCreateManagedUser_DisallowedRole() {
+        AdminUserForm form = new AdminUserForm();
+        form.setUsername("admin2");
+        form.setPassword("password123");
+
+        assertThrows(IllegalArgumentException.class, () ->
+                userService.createManagedUser(form, Role.ADMIN));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Update managed user successfully")
+    void testUpdateManagedUser_Success() {
+        AdminUserForm form = new AdminUserForm();
+        form.setUsername("johndoe_updated");
+        form.setEmail("john_updated@campus.edu");
+        form.setFullName("John Doe Updated");
+        form.setPassword("newsecret123");
+        form.setDepartment("Information Technology");
+        form.setPhone("5555555555");
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+        when(userRepository.findByUsername("johndoe_updated")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("john_updated@campus.edu")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("newsecret123")).thenReturn("encodedNewSecret");
+        when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+
+        UserResponse response = userService.updateManagedUser(1L, form);
+
+        assertNotNull(response);
+        assertEquals("johndoe_updated", sampleUser.getUsername());
+        assertEquals("john_updated@campus.edu", sampleUser.getEmail());
+        verify(passwordEncoder).encode("newsecret123");
+        verify(userRepository).save(sampleUser);
+    }
+
+    @Test
+    @DisplayName("Update managed user rejects editing ADMIN accounts")
+    void testUpdateManagedUser_DisallowedForAdmin() {
+        User admin = new User("admin", "pass", "admin@campus.edu", "Admin", Role.ADMIN);
+        admin.setId(10L);
+
+        when(userRepository.findById(10L)).thenReturn(Optional.of(admin));
+
+        AdminUserForm form = new AdminUserForm();
+        assertThrows(IllegalArgumentException.class, () ->
+                userService.updateManagedUser(10L, form));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Deactivate managed user successfully and expires active sessions")
+    void testDeactivateManagedUser_Success_ExpiresSessions() {
+        UserDetails principal = org.springframework.security.core.userdetails.User
+                .withUsername("johndoe").password("encodedSecret").roles("STUDENT").build();
+        SessionInformation session = new SessionInformation(principal, "sess-2", new Date());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+        when(userRepository.save(any(User.class))).thenReturn(sampleUser);
+        when(sessionRegistry.getAllPrincipals()).thenReturn(List.of(principal));
+        when(sessionRegistry.getAllSessions(principal, false)).thenReturn(List.of(session));
+
+        userService.deactivateManagedUser(1L, "admin");
+
+        assertFalse(sampleUser.isEnabled());
+        assertTrue(session.isExpired());
+        verify(userRepository).save(sampleUser);
+    }
+
+    @Test
+    @DisplayName("Deactivate managed user rejects self-deactivation")
+    void testDeactivateManagedUser_CannotDeactivateSelf() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                userService.deactivateManagedUser(1L, "johndoe"));
+        verify(userRepository, never()).save(any(User.class));
     }
 }

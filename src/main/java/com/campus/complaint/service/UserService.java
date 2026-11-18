@@ -1,5 +1,6 @@
 package com.campus.complaint.service;
 
+import com.campus.complaint.dto.AdminUserForm;
 import com.campus.complaint.dto.RegisterRequest;
 import com.campus.complaint.dto.UserResponse;
 import com.campus.complaint.entity.Role;
@@ -134,6 +135,68 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         user.setEnabled(!user.isEnabled());
+        User saved = userRepository.save(user);
+        expireUserSessions(saved.getUsername());
+    }
+
+    public UserResponse createManagedUser(AdminUserForm form, Role role) {
+        if (role != Role.STUDENT && role != Role.MAINTENANCE_STAFF) {
+            throw new IllegalArgumentException("Only student and maintenance staff accounts can be managed here");
+        }
+        if (userRepository.existsByUsername(form.getUsername())) {
+            throw new DuplicateResourceException("Username '" + form.getUsername() + "' is already taken");
+        }
+        if (userRepository.existsByEmail(form.getEmail())) {
+            throw new DuplicateResourceException("Email '" + form.getEmail() + "' is already registered");
+        }
+        if (form.getPassword() == null || form.getPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must contain at least 6 characters");
+        }
+        User user = new User();
+        user.setUsername(form.getUsername().trim());
+        user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setEmail(form.getEmail().trim());
+        user.setFullName(form.getFullName().trim());
+        user.setPhone(form.getPhone());
+        user.setDepartment(form.getDepartment());
+        user.setRole(role);
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updateManagedUser(Long id, AdminUserForm form) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        if (user.getRole() != Role.STUDENT && user.getRole() != Role.MAINTENANCE_STAFF) {
+            throw new IllegalArgumentException("Administrator accounts cannot be edited here");
+        }
+        userRepository.findByUsername(form.getUsername()).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) throw new DuplicateResourceException("Username is already taken");
+        });
+        userRepository.findByEmail(form.getEmail()).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) throw new DuplicateResourceException("Email is already registered");
+        });
+        user.setUsername(form.getUsername().trim());
+        user.setEmail(form.getEmail().trim());
+        user.setFullName(form.getFullName().trim());
+        user.setPhone(form.getPhone());
+        user.setDepartment(form.getDepartment());
+        if (form.getPassword() != null && !form.getPassword().isBlank()) {
+            if (form.getPassword().length() < 6) throw new IllegalArgumentException("Password must contain at least 6 characters");
+            user.setPassword(passwordEncoder.encode(form.getPassword()));
+        }
+        return toResponse(userRepository.save(user));
+    }
+
+    public void deactivateManagedUser(Long id, String currentUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        if (user.getRole() != Role.STUDENT && user.getRole() != Role.MAINTENANCE_STAFF) {
+            throw new IllegalArgumentException("Administrator accounts cannot be deactivated here");
+        }
+        if (user.getUsername().equals(currentUsername)) {
+            throw new IllegalArgumentException("You cannot deactivate your own account");
+        }
+        user.setEnabled(false);
         User saved = userRepository.save(user);
         expireUserSessions(saved.getUsername());
     }

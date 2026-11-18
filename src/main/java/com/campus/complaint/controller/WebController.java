@@ -187,7 +187,92 @@ public class WebController {
     @GetMapping("/admin/users")
     public String adminUsers(Model model) {
         model.addAttribute("users", userService.getAllUsers());
+        model.addAttribute("userForm", new AdminUserForm());
         return "admin/users";
+    }
+
+    @PostMapping("/admin/users/new")
+    public String adminCreateUser(@Valid @ModelAttribute("userForm") AdminUserForm form,
+                                  BindingResult result, @RequestParam Role role,
+                                  RedirectAttributes redirectAttributes, Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("users", userService.getAllUsers());
+            model.addAttribute("error", "Please check the entered details. Username, name, email and password are required.");
+            return "admin/users";
+        }
+        try {
+            userService.createManagedUser(form, role);
+            redirectAttributes.addFlashAttribute("success", role == Role.STUDENT
+                    ? "Student account created successfully!" : "Maintenance staff account created successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/admin/users/{id}/edit")
+    public String adminEditUser(@PathVariable Long id, Model model) {
+        UserResponse user = userService.getUserById(id);
+        if (user.getRole() != Role.STUDENT && user.getRole() != Role.MAINTENANCE_STAFF) {
+            return "redirect:/admin/users";
+        }
+        AdminUserForm form = new AdminUserForm();
+        form.setUsername(user.getUsername());
+        form.setEmail(user.getEmail());
+        form.setFullName(user.getFullName());
+        form.setPhone(user.getPhone());
+        form.setDepartment(user.getDepartment());
+        model.addAttribute("user", user);
+        model.addAttribute("userForm", form);
+        return "admin/edit-user";
+    }
+
+    @PostMapping("/admin/users/{id}/edit")
+    public String adminUpdateUser(@PathVariable Long id,
+                                  @Valid @ModelAttribute("userForm") AdminUserForm form,
+                                  BindingResult result, Model model,
+                                  RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            model.addAttribute("user", userService.getUserById(id));
+            model.addAttribute("error", "Please check the entered details. Leave password blank to keep the current password.");
+            return "admin/edit-user";
+        }
+        try {
+            userService.updateManagedUser(id, form);
+            redirectAttributes.addFlashAttribute("success", "User details updated successfully!");
+            return "redirect:/admin/users";
+        } catch (Exception e) {
+            model.addAttribute("user", userService.getUserById(id));
+            model.addAttribute("error", e.getMessage());
+            return "admin/edit-user";
+        }
+    }
+
+    @PostMapping("/admin/users/{id}/deactivate")
+    public String adminDeactivateUser(@PathVariable Long id, Authentication auth,
+                                      RedirectAttributes redirectAttributes) {
+        try {
+            userService.deactivateManagedUser(id, auth.getName());
+            redirectAttributes.addFlashAttribute("success", "User account deactivated. Existing complaint history has been preserved.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/admin/users/{id}/toggle-status")
+    public String adminToggleUserStatus(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            UserResponse user = userService.getUserById(id);
+            if (user.getRole() != Role.STUDENT && user.getRole() != Role.MAINTENANCE_STAFF) {
+                throw new IllegalArgumentException("Administrator accounts are protected");
+            }
+            userService.toggleUserEnabled(id);
+            redirectAttributes.addFlashAttribute("success", "User account status updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/users";
     }
 
     @GetMapping("/admin/categories")
